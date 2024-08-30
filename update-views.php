@@ -19,10 +19,10 @@ class WP_view_update_API {
 
 		// Đăng ký API endpoint khi khởi tạo class
 		add_action('rest_api_init', [$this, 'register_api_endpoints']);
-		add_action('resert_view_daily', [$this, 'cron_jon_resrt_view_daily']);
-		add_action('resert_view_week', [$this, 'cron_jon_resrt_view_week']);
-		add_action('resert_view_month', [$this, 'cron_jon_resrt_view_month']);
-		$this->cron_job_resert_view();
+		add_action('reset_views_daily', [$this, 'cron_reset_views_daily']);
+		add_action('reset_views_week', [$this, 'cron_reset_views_week']);
+		add_action('reset_views_month', [$this, 'cron_reset_views_month']);
+		$this->cron_job_reset_view();
 		add_action( 'after_setup_theme', [$this, 'api_url' ] );
 
 	}
@@ -99,20 +99,20 @@ class WP_view_update_API {
 		 return new WP_REST_Response(['message' => 'done', 'movie' => $value_post_view_month], 200);
 	}
 	
-	public function cron_job_resert_view() {
-		if (!wp_next_scheduled('resert_view_daily')) {
-			wp_schedule_event(time(), 'daily', 'resert_view_daily');
+	public function cron_job_reset_view() {
+		if (!wp_next_scheduled('reset_views_daily')) {
+			wp_schedule_event(time(), 'daily', 'reset_views_daily');
 		}
 
-		if (!wp_next_scheduled('resert_view_week')) {
-			wp_schedule_event(time(), 'weekly', 'resert_view_week');
+		if (!wp_next_scheduled('reset_views_week')) {
+			wp_schedule_event(time(), 'weekly', 'reset_views_week');
 		}
 
-		if(!wp_next_scheduled('resert_view_month')) {
-			wp_schedule_event(time(), 'monthly', 'resert_view_month');
+		if(!wp_next_scheduled('reset_views_month')) {
+			wp_schedule_event(time(), 'monthly', 'reset_views_month');
 		}
 	}
-	public function cron_jon_resrt_view_daily() {
+	public function cron_reset_views_daily() {
 		global $wpdb;
 		// Reset cột post_view_day về 0
 		$wpdb->query(
@@ -120,7 +120,7 @@ class WP_view_update_API {
 		);
   }
   
-  public function cron_jon_resrt_view_week() {
+  public function cron_reset_views_week() {
 		global $wpdb;
 		// Reset cột post_view_week về 0
 		$wpdb->query(
@@ -128,7 +128,7 @@ class WP_view_update_API {
 		);
   }
   
-  public function cron_jon_resrt_view_month() {
+  public function cron_reset_views_month() {
 		global $wpdb;
 		// Reset cột post_view_month về 0
 		$wpdb->query(

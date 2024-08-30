@@ -11,8 +11,8 @@
 1. **Tải xuống và cài đặt hoặc chèn code trong file function**
 2. **Chỉnh sử thông tin bảng, cột, endpoint phù hợp
     ```php
-new WP_view_update_API('update-view' ,'wp_pods_movie', 'post_views', 'post_view_day', 'post_view_week', 'post_view_month');
- ```
+        new WP_view_update_API('update-view' ,'wp_pods_movie', 'post_views', 'post_view_day', 'post_view_week', 'post_view_month');
+     ```
 - **Thay thế function lấy permalink:**
     Nếu không sử dụng Pods để lấy permalink thông quan pods_v, bạn có thể thay thế bằng hàm khác như sau:
 

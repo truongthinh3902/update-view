@@ -1,3 +1,4 @@
+<?php
 // count view 
 class WP_view_update_API {
 	private $table_name;

@@ -1,44 +1,46 @@
-<?php 
+<?php
+
+
 class WP_view_update_API {
 	private $table_name;
 	private $post_views;
 	private $post_view_day;
 	private $post_view_week;
 	private $post_view_month;
-	private $api_url;
 
 	// Constructor nhận các tham số đầu vào để thiết lập các thuộc tính
-	public function __construct($api_url = '', $table_name = 'wp_pods_movie', $post_views = 'post_views', $post_view_day = 'post_view_day', $post_view_week = 'post_view_week', $post_view_month = 'post_view_month') {
+	public function __construct(
+        $table_name = 'wp_pods_comics', 
+        $post_views = 'post_view', 
+        $post_view_day = 'views_day', 
+        $post_view_week = 'views_week', 
+        $post_view_month = 'views_month'
+        ) {
 		 // Gán giá trị đầu vào cho các thuộc tính của class
 		 $this->table_name = $table_name;
 		 $this->post_views = $post_views;
 		 $this->post_view_day = $post_view_day;
 		 $this->post_view_week = $post_view_week;
 		 $this->post_view_month = $post_view_month;
-		 $this->api_url = $api_url;
 
 		// Đăng ký API endpoint khi khởi tạo class
 		add_action('rest_api_init', [$this, 'register_api_endpoints']);
-		add_action('reset_views_daily', [$this, 'cron_reset_views_daily']);
-		add_action('reset_views_week', [$this, 'cron_reset_views_week']);
-		add_action('reset_views_month', [$this, 'cron_reset_views_month']);
-		$this->cron_job_reset_view();
-		add_action( 'after_setup_theme', [$this, 'api_url' ] );
-
+		add_action('resert_view_daily', [$this, 'cron_job_reset_view_daily']);
+		add_action('resert_view_week', [$this, 'cron_job_reset_view_week']);
+		add_action('resert_view_month', [$this, 'cron_job_reset_view_month']);
+        // add_action('wp_enqueue_scripts', 'my_enqueue_scripts_view');
+		$this->cron_job_resert_view();
 	}
 
-		// Đăng ký các endpoint cho WP REST API
-		public function register_api_endpoints() {
-			register_rest_route('post-api/v1', $this->api_url, [
-				'methods' => 'POST',
-				'callback' => [$this, 'update_post_view'],
-				'permission_callback' => '__return_true', // Có thể thay đổi theo nhu cầu
-			]);
-		}
-		public function api_url() {
-			global $api_url;
-			$api_url = home_url('wp-json/post-api/v1/'.$this->api_url );
-		}
+	// Đăng ký các endpoint cho WP REST API
+	public function register_api_endpoints() {
+		 register_rest_route('post-api/v1', '/update-view/', [
+			  'methods' => 'POST',
+			  'callback' => [$this, 'update_post_view'],
+			  'permission_callback' => '__return_true', // Có thể thay đổi theo nhu cầu
+		 ]);
+	} 
+
 
 	// Hàm để cập nhật số lượng view của bài viết
 	public function update_post_view($request) {
@@ -49,7 +51,7 @@ class WP_view_update_API {
 
 		 // Lấy số lượng view hiện tại từ database
 		 $sql = $wpdb->prepare(
-			  "SELECT {$this->post_views}, {$this->post_view_day}, {$this->post_view_month}, {$this->post_view_month} FROM {$this->table_name} WHERE permalink = %s",
+			  "SELECT {$this->post_views}, {$this->post_view_day}, {$this->post_view_week}, {$this->post_view_month} FROM {$this->table_name} WHERE slug = %s",
 			  $permalink
 		 );
 		 $results = $wpdb->get_results($sql);
@@ -91,53 +93,54 @@ class WP_view_update_API {
 				   $this->post_view_week => $value_post_view_week,
 				   $this->post_view_month => $value_post_view_month
 			  ],
-			  ['permalink' => $permalink]
+			  ['slug' => $permalink]
 		 );
 
 
 		 // Nếu không tìm thấy permalink, trả về thông báo lỗi
-		 return new WP_REST_Response(['message' => 'done', 'movie' => $value_post_view_month], 200);
+		 return new WP_REST_Response(['message' => 'done', 'movie' => $value_post_view_day], 200);
 	}
 	
-	public function cron_job_reset_view() {
-		if (!wp_next_scheduled('reset_views_daily')) {
-			wp_schedule_event(time(), 'daily', 'reset_views_daily');
+	public function cron_job_resert_view() {
+		if (!wp_next_scheduled('resert_view_daily')) {
+			wp_schedule_event(time(), 'daily', 'resert_view_daily');
 		}
 
-		if (!wp_next_scheduled('reset_views_week')) {
-			wp_schedule_event(time(), 'weekly', 'reset_views_week');
+		if (!wp_next_scheduled('resert_view_week')) {
+			wp_schedule_event(time(), 'weekly', 'resert_view_week');
 		}
 
-		if(!wp_next_scheduled('reset_views_month')) {
-			wp_schedule_event(time(), 'monthly', 'reset_views_month');
+		if(!wp_next_scheduled('resert_view_month')) {
+			wp_schedule_event(time(), 'monthly', 'resert_view_month');
 		}
 	}
-	public function cron_reset_views_daily() {
+	public function cron_job_reset_view_daily() {
 		global $wpdb;
 		// Reset cột post_view_day về 0
 		$wpdb->query(
 			 "UPDATE {$this->table_name} SET {$this->post_view_day} = 0"
 		);
-  }
-  
-  public function cron_reset_views_week() {
-		global $wpdb;
-		// Reset cột post_view_week về 0
-		$wpdb->query(
-			 "UPDATE {$this->table_name} SET {$this->post_view_week} = 0"
-		);
-  }
-  
-  public function cron_reset_views_month() {
-		global $wpdb;
-		// Reset cột post_view_month về 0
-		$wpdb->query(
-			 "UPDATE {$this->table_name} SET {$this->post_view_month} = 0"
-		);
-  }
+	}
+	
+	public function cron_job_reset_view_week() {
+			global $wpdb;
+			// Reset cột post_view_week về 0
+			$wpdb->query(
+				"UPDATE {$this->table_name} SET {$this->post_view_week} = 0"
+			);
+	}
+	
+	public function cron_job_reset_view_month() {
+			global $wpdb;
+			// Reset cột post_view_month về 0
+			$wpdb->query(
+				"UPDATE {$this->table_name} SET {$this->post_view_month} = 0"
+			);
+	}
   
 };
-// Khởi tạo class với các giá trị đầu vào tùy chỉnh 
+// Khởi tạo class với các giá trị đầu vào tùy chỉnh
 
-// WP_view_update_API(url_endpoint, table_name, post_views, post_view_day, post_view_week, post_view_month)
-new WP_view_update_API('update-view' ,'wp_pods_movie', 'post_views', 'post_view_day', 'post_view_week', 'post_view_month');
+
+
+new WP_view_update_API('wp_pods_comics', 'post_view', 'views_day', 'views_week', 'views_month');
